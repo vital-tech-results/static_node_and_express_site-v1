@@ -1,43 +1,38 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const { data } = require('./data.json');
-const router = express.Router();
-const { projects } = data;
-
 const app = express();
+const routes = require('./routes');
+
+
+const projectRoutes = require('./routes/project');
+
+app.use(routes);
+
+
+app.use('/project', projectRoutes);
+
 app.use(cors());
+
+//set the “view engine” to “pug”
+app.set('view engine', 'pug');
 
 // a static route and the express.static method to serve the static files located in the public folder
 app.use('/static', express.static('public'));
 app.use('/img', express.static('img'));
-//set the “view engine” to “pug”
-app.set('view engine', 'pug');
 
-
-//An "index" route(/) to render the "Home" page with the locals set to data.projects
-
-app.get('/', (req, res) => {
-    res.render('index', { projects: projects });
+app.use((req, res, next) => {
+    const err = new Error("The page you are looking for does not exist.");
+    err.status = 404;
+    next(err);
 });
 
-// An "about" route (/about) to render the "About" page
-app.get('/about', (req, res) => {
-    res.render('about');
+app.use((err, req, res, next) => {
+    res.locals.error = err;
+    res.status(err.status);
+    res.render('error');
+    console.log('The page you are looking for does not exist.');
 });
-
-app.get('/data', (res, req) => {
-    res.render('data.json');
-});
-
-app.get('/project', (req, res) => {
-    res.render('project', { projects: projects });
-});
-
-// app.get('/:id', (req, res) => {
-//     const { id } = req.params;
-//     return res.redirect(`/project/${id}`);
-// });
 
 app.listen(3000, () => {
     console.log("the app is running on port 3000 now");
